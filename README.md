@@ -1,16 +1,30 @@
-# React + Vite
+# Windows Web OS Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Este es un portafolio web interactivo inspirado en la interfaz de Windows 10. Fue construido para funcionar directamente en el navegador, pareciendo y sintiendose como un sistema operativo real.
 
-Currently, two official plugins are available:
+## Tecnologias usadas
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+* React y Vite
+* Tailwind CSS
+* Zustand (para manejar el estado)
+* Framer Motion (para las animaciones de las ventanas)
 
-## React Compiler
+## Funciones principales
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+* Ventanas que se pueden arrastrar, minimizar y maximizar de forma fluida.
+* Un menu de inicio y una barra de tareas funcionales.
+* Acceso directo a carpetas y aplicaciones desde el escritorio.
+* Animaciones suaves parecidas a las de un sistema operativo.
 
-## Expanding the ESLint configuration
+## Como instalar y ejecutar
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Clona este repositorio en tu computadora:
+   git clone https://github.com/Mainalam7084/win-portfolio.git
+
+2. Abre la terminal en la carpeta del proyecto.
+
+3. Instala las dependencias ejecutando:
+   npm install
+
+4. Inicia el proyecto ejecutando:
+   npm run dev
