@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { motion, useDragControls } from 'framer-motion'
 import { ResizableBox } from 'react-resizable'
 import { X, Square, Minus } from 'lucide-react'
@@ -19,6 +19,9 @@ export default function Window({ windowData, appConfig, children }) {
 
   const dragControls = useDragControls()
   const [isInteracting, setIsInteracting] = useState(false)
+  
+  // Track continuous physical position without triggering React renders
+  const currentPos = useRef({ x: position.x, y: position.y })
 
   if (minimized) return null
   const isActive = activeWindowId === id
@@ -29,11 +32,11 @@ export default function Window({ windowData, appConfig, children }) {
     focusWindow(id)
   }
 
-  const handleDragStop = (e, info) => {
+  const handleDragStop = () => {
     setIsInteracting(false)
     setShieldActive(false)
-    // framer-motion tracks x/y transforms natively; we only need rough snapshots if saving layout.
-    // For now we don't strictly bind x/y back to store because framer-motion persists it per component safely.
+    // Synchronize Framer Motion's physical rest state with Zustand to prevent teleporting
+    updateWindowPosition(id, { x: currentPos.current.x, y: currentPos.current.y })
   }
 
   const handleResizeStart = () => {
@@ -48,23 +51,46 @@ export default function Window({ windowData, appConfig, children }) {
     updateWindowSize(id, { width: newSize.width, height: newSize.height })
   }
 
-  let content = (
-    <div 
-      className={`flex flex-col bg-[#1e1e1e] border-[#3a3a3a] rounded-t-[8px] overflow-hidden transition-shadow duration-300 ${isActive ? 'shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border' : 'shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] border opacity-95'}`}
-      style={{
+  return (
+    <motion.div
+      drag={!maximized}
+      dragControls={dragControls}
+      dragListener={false} // Only grabbed via our explicit title bar
+      dragMomentum={true}
+      dragElastic={0.08} // Tighter, strict physical boundary tension
+      dragConstraints={{
+        left: 0,
+        top: 0,
+        right: window.innerWidth - size.width,
+        bottom: window.innerHeight - size.height - 48
+      }}
+      initial={{ x: position.x, y: position.y + 20, opacity: 0, scale: 0.92, width: size.width, height: size.height }}
+      animate={{ 
+        x: maximized ? 0 : position.x, 
+        y: maximized ? 0 : position.y,
         width: maximized ? '100vw' : size.width,
         height: maximized ? 'calc(100vh - 48px)' : size.height,
+        opacity: isActive ? 1 : 0.85, 
+        scale: isActive ? 1 : 0.98,
       }}
+      exit={{ opacity: 0, scale: 0.92, y: currentPos.current.y + 10 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      onUpdate={(latest) => {
+        // Scrape physical metrics globally
+        if (latest.x !== undefined) currentPos.current.x = latest.x
+        if (latest.y !== undefined) currentPos.current.y = latest.y
+      }}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragStop}
+      style={{ position: 'absolute', top: 0, left: 0, zIndex }}
+      className={`flex flex-col bg-[#1e1e1e] border-[#3a3a3a] ${maximized ? '' : 'rounded-t-[8px]'} overflow-hidden transition-shadow duration-300 ${isActive ? 'shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] border' : 'shadow-[0_10px_30px_-10px_rgba(0,0,0,0.5)] border opacity-95'}`}
       onPointerDownCapture={() => !isActive && focusWindow(id)}
     >
       {/* Title Bar strictly handles dragging */}
       <div 
         className={`flex justify-between items-center h-8 select-none ${isActive ? 'bg-[#2b2b2b]' : 'bg-[#1a1a1a]'} text-white border-b border-[#3a3a3a]`}
         onDoubleClick={() => maximizeWindow(id)}
-        onPointerDown={(e) => {
-          dragControls.start(e)
-          handleDragStart()
-        }}
+        onPointerDown={(e) => !maximized && dragControls.start(e)}
       >
         <div className="flex items-center gap-2 px-3 text-xs w-full overflow-hidden cursor-default">
           <appConfig.icon size={14} className="text-blue-400 shrink-0" />
@@ -86,7 +112,7 @@ export default function Window({ windowData, appConfig, children }) {
             <Square size={12} />
           </button>
           <button 
-            className="w-11 flex items-center justify-center hover:bg-red-600 transition-colors group"
+            className="w-11 flex items-center justify-center hover:bg-red-600 transition-colors group z-50 relative"
             onClick={(e) => { e.stopPropagation(); closeWindow(id) }}
             onPointerDown={(e) => e.stopPropagation()}
           >
@@ -96,50 +122,24 @@ export default function Window({ windowData, appConfig, children }) {
       </div>
 
       <div className="flex-1 bg-white relative overflow-hidden">
-        {children}
+        {maximized ? (
+          children
+        ) : (
+          <ResizableBox
+            width={size.width}
+            height={size.height - 32} // compensate for title bar
+            onResizeStart={handleResizeStart}
+            onResizeStop={handleResizeStop}
+            resizeHandles={['se', 'e', 's']}
+            minConstraints={[300, 200]}
+            maxConstraints={[2000, 2000]}
+          >
+            <div className="w-full h-full relative">
+              {children}
+            </div>
+          </ResizableBox>
+        )}
       </div>
-    </div>
-  )
-
-  if (maximized) {
-    return (
-      <motion.div 
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.95 }}
-        transition={{ type: "spring", stiffness: 350, damping: 25 }}
-        style={{ position: 'absolute', top: 0, left: 0, zIndex }}
-      >
-        {content}
-      </motion.div>
-    )
-  }
-
-  return (
-    <motion.div
-      drag
-      dragControls={dragControls}
-      dragListener={false} // Only title bar is grabbable
-      dragMomentum={true}
-      dragElastic={0.1}
-      onDragEnd={handleDragStop}
-      initial={{ x: position.x, y: position.y + 20, opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: isActive ? 1 : 0.98 }}
-      exit={{ opacity: 0, scale: 0.95, y: position.y + 10 }}
-      transition={{ type: "spring", stiffness: 350, damping: 25 }}
-      style={{ position: 'absolute', zIndex }}
-    >
-      <ResizableBox
-        width={size.width}
-        height={size.height}
-        onResizeStart={handleResizeStart}
-        onResizeStop={handleResizeStop}
-        resizeHandles={['se', 'e', 's']}
-        minConstraints={[300, 200]}
-        maxConstraints={[2000, 2000]}
-      >
-        {content}
-      </ResizableBox>
     </motion.div>
   )
 }
