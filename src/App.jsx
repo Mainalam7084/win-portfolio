@@ -2,6 +2,7 @@ import React from 'react'
 import Desktop from './components/Desktop/Desktop'
 import Taskbar from './components/Taskbar/Taskbar'
 import WindowManager from './core/WindowManager'
+import MiniRadioPlayer from './apps/Radio/MiniRadioPlayer'
 import { useStore } from './core/store'
 
 function App() {
@@ -15,6 +16,8 @@ function App() {
       <div className="flex-1 relative z-0">
         <Desktop />
         <WindowManager />
+        {/* Global Widgets */}
+        <MiniRadioPlayer />
       </div>
       <div className="h-12 relative z-50">
         <Taskbar />
