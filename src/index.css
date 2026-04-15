@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #0078D7;
+  --color-dark-bg: #1f1f1f;
+  
+  --font-family-sans: "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+body {
+  @apply bg-dark-bg text-white overflow-hidden;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family-sans);
+  user-select: none;
+}
+
+/* Custom scrollbar for web OS feel */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Overriding and padding react-resizable handles to make them grabbable */
+.react-resizable-handle {
+  position: absolute;
+  z-index: 100;
+  box-sizing: border-box;
+}
+
+.react-resizable-handle-e {
+  width: 8px !important;
+  right: -4px !important;
+  top: 0;
+  height: 100%;
+  cursor: e-resize;
+  background: transparent !important;
+}
+
+.react-resizable-handle-s {
+  height: 8px !important;
+  bottom: -4px !important;
+  left: 0;
+  width: 100%;
+  cursor: s-resize;
+  background: transparent !important;
+}
+
+.react-resizable-handle-se {
+  width: 12px !important;
+  height: 12px !important;
+  right: -6px !important;
+  bottom: -6px !important;
+  cursor: se-resize;
+  background: transparent !important;
+}
