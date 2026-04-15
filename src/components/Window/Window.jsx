@@ -35,8 +35,17 @@ export default function Window({ windowData, appConfig, children }) {
   const handleDragStop = () => {
     setIsInteracting(false)
     setShieldActive(false)
+    
+    // Total boundary limit checks: The window must remain somewhat visible so the user can grab it.
+    // X threshold: Keep at least 80 pixels visible. Y threshold: Strictly clamp titlebar to ceiling (0).
+    const maxX = window.innerWidth - 80
+    const minX = -size.width + 80
+    
+    const safeX = Math.max(minX, Math.min(currentPos.current.x, maxX))
+    const safeY = Math.max(0, currentPos.current.y) // Only clamp ceiling, allow user to slide it under taskbar
+    
     // Synchronize Framer Motion's physical rest state with Zustand to prevent teleporting
-    updateWindowPosition(id, { x: currentPos.current.x, y: currentPos.current.y })
+    updateWindowPosition(id, { x: safeX, y: safeY })
   }
 
   const handleResizeStart = () => {
@@ -59,10 +68,10 @@ export default function Window({ windowData, appConfig, children }) {
       dragMomentum={true}
       dragElastic={0.08} // Tighter, strict physical boundary tension
       dragConstraints={{
-        left: 0,
-        top: 0,
-        right: window.innerWidth - size.width,
-        bottom: window.innerHeight - size.height - 48
+        left: -10000,
+        top: -10000,
+        right: 10000,
+        bottom: 10000
       }}
       initial={{ x: position.x, y: position.y + 20, opacity: 0, scale: 0.92, width: size.width, height: size.height }}
       animate={{ 
