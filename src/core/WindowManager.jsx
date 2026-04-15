@@ -2,12 +2,13 @@ import React from 'react'
 import { useStore } from './store'
 import { AppRegistry } from './AppRegistry'
 import Window from '../components/Window/Window'
+import { AnimatePresence } from 'framer-motion'
 
 export default function WindowManager() {
   const windows = useStore(state => state.windows)
 
   return (
-    <>
+    <AnimatePresence>
       {windows.map(win => {
         const appConfig = AppRegistry[win.app]
         if (!appConfig) return null
@@ -20,6 +21,6 @@ export default function WindowManager() {
           </Window>
         )
       })}
-    </>
+    </AnimatePresence>
   )
 }
